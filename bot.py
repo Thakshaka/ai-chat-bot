@@ -1,11 +1,11 @@
-# bot.py
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import google.generativeai as genai
 from dotenv import load_dotenv
-from threading import Thread
-from flask import Flask
+from keep_alive import keep_alive
+
+keep_alive()
 
 load_dotenv()
 
@@ -25,30 +25,20 @@ def generate_content(full_prompt: str) -> str:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.first_name
-    await update.message.reply_text(f"Hello {user_id}! I am a chatbot. How can I help you today?")
+    system_message = f"Hello {user_id}! I am a chatbot. How can I help you today?"
+    await update.message.reply_text(system_message)
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_message = update.message.text
     response_text = generate_content(user_message)
     await update.message.reply_text(response_text)
 
-# Telegram bot thread
-def run_telegram():
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
-    app.run_polling()
+# Build the application
+app = ApplicationBuilder().token(TOKEN).build()
 
-# Flask HTTP server for health checks
-flask_app = Flask(__name__)
+# Add handlers
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 
-@flask_app.route('/')
-def index():
-    return "Alive"
-
-if __name__ == "__main__":
-    # Start Telegram bot in background
-    Thread(target=run_telegram).start()
-
-    # Start Flask as main process (port 8000)
-    flask_app.run(host='0.0.0.0', port=8000)
+# Run the bot
+app.run_polling()
