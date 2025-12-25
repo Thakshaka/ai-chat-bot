@@ -50,5 +50,5 @@ if __name__ == "__main__":
     # Start Telegram bot in background
     Thread(target=run_telegram).start()
 
-    # Start Flask as main process (port 8080)
-    flask_app.run(host='0.0.0.0', port=8080)
+    # Start Flask as main process (port 8000)
+    flask_app.run(host='0.0.0.0', port=8000)
